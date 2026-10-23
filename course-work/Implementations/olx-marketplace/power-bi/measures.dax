@@ -1,0 +1,79 @@
+// Мерки за Power BI отчета (Home -> New measure, всяка поотделно)
+// Препоръчвам да ги сложите в отделна таблица "_Measures" (Enter data -> празна таблица)
+
+// ---------------- Продажби ----------------
+Оборот =
+CALCULATE ( SUM ( FactSales[TotalAmount] ), FactSales[OrderStatus] = "Delivered" )
+
+Стойност на стоките =
+CALCULATE ( SUM ( FactSales[ItemPrice] ), FactSales[OrderStatus] = "Delivered" )
+
+Брой поръчки =
+COUNTROWS ( FactSales )
+
+Доставени поръчки =
+SUM ( FactSales[IsCompleted] )
+
+Среден чек =
+DIVIDE ( [Оборот], [Доставени поръчки] )
+
+% отказани/върнати =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( FactSales ), FactSales[OrderStatus] IN { "Cancelled", "Returned" } ),
+    [Брой поръчки]
+)
+
+Средно дни за доставка =
+AVERAGE ( FactSales[DeliveryDays] )
+
+Оборот от началото на годината =
+TOTALYTD ( [Оборот], DimDate[FullDate] )
+
+Оборот предходен месец =
+CALCULATE ( [Оборот], DATEADD ( DimDate[FullDate], -1, MONTH ) )
+
+// поръчки по дата на доставка (използва неактивната връзка DeliveredDateKey)
+Доставени по дата на доставка =
+CALCULATE ( [Доставени поръчки], USERELATIONSHIP ( FactSales[DeliveredDateKey], DimDate[DateKey] ) )
+
+// ---------------- Обяви ----------------
+Брой обяви =
+SUM ( FactListings[ListingCount] )
+
+Продадени обяви =
+SUM ( FactListings[IsSold] )
+
+% продадени =
+DIVIDE ( [Продадени обяви], [Брой обяви] )
+
+Средна цена на обява =
+AVERAGE ( FactListings[Price] )
+
+Средно прегледи на обява =
+AVERAGE ( FactListings[ViewsCount] )
+
+Средна отстъпка % =
+AVERAGEX (
+    FILTER ( FactListings, FactListings[PriceChangesCount] > 0 ),
+    DIVIDE ( FactListings[InitialPrice] - FactListings[Price], FactListings[InitialPrice] )
+)
+
+// ---------------- Промоции ----------------
+Приходи от промоции =
+SUM ( FactPromotions[PaidAmount] )
+
+Брой промоции =
+COUNTROWS ( FactPromotions )
+
+% промоции довели до продажба =
+DIVIDE ( SUM ( FactPromotions[LedToSale] ), [Брой промоции] )
+
+// ---------------- Оценки ----------------
+Среден рейтинг =
+AVERAGE ( FactReviews[Rating] )
+
+Брой оценки =
+COUNTROWS ( FactReviews )
+
+% положителни оценки =
+DIVIDE ( SUM ( FactReviews[IsPositive] ), [Брой оценки] )
